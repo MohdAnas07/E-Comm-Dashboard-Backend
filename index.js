@@ -15,9 +15,4 @@ app.post('/register', async (req, res) => {
 })
 
 
-// app.get('/', async (req, res) => {
-//     let data = await User.find();
-//     res.send(data);
-// })
-
 app.listen(5000);
