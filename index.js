@@ -1,6 +1,11 @@
 const express = require('express')
 const mongoose = require('mongoose')
+const Jwt = require('jsonwebtoken');
+const jwtKey = process.env.JWT_KEY || 'e-comm';
+
+
 const app = express();
+
 require('./db/config')
 
 const User = require('./db/User');
@@ -16,14 +21,26 @@ app.post('/register', async (req, res) => {
     let result = await user.save()
     result = result.toObject();
     delete result.password;
-    res.send(result);
+    Jwt.sign({ result }, jwtKey, (err, token) => {
+        if (err) {
+            res.send({ result: 'something went wrong' });
+        } else {
+            res.send({ result, auth: token });
+        }
+    })
 })
 
 app.post('/login', async (req, res) => {
     if (req.body.password && req.body.email) {
         let user = await User.findOne(req.body).select('-password')
         if (user) {
-            res.send(user);
+            Jwt.sign({ user }, jwtKey, (err, token) => {
+                if (err) {
+                    res.send({ result: 'something went wrong' });
+                } else {
+                    res.send({ user, auth: token });
+                }
+            })
         } else {
             res.send({ result: 'No user found' });
         }
@@ -71,6 +88,17 @@ app.put('/product/:id', async (req, res) => {
         { $set: req.body }
     )
     res.send(result);
+})
+
+app.get('/search/:key', async (req, res) => {
+    let result = await Product.find({
+        "$or": [
+            { name: { $regex: req.params.key } },
+            { company: { $regex: req.params.key } },
+            { category: { $regex: req.params.key } },
+        ]
+    })
+    res.send(result)
 })
 
 
