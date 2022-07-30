@@ -18,14 +18,14 @@ app.use(express.json());
 
 app.post('/register', async (req, res) => {
     let user = new User(req.body);
-    let result = await user.save()
-    result = result.toObject();
-    delete result.password;
-    Jwt.sign({ result }, jwtKey, (err, token) => {
+    user = await user.save()
+    user = user.toObject();
+    delete user.password;
+    Jwt.sign({ user }, jwtKey, (err, token) => {
         if (err) {
             res.send({ result: 'something went wrong' });
         } else {
-            res.send({ result, auth: token });
+            res.send({ user, auth: token });
         }
     })
 })
@@ -100,6 +100,19 @@ app.get('/search/:key', async (req, res) => {
     })
     res.send(result)
 })
+
+
+function verifyToken(req, res, callback) {
+    let token = req.headers['authorization'];
+    token = token.split(' ')[1];
+    console.log("token:", token);
+    if (token) {
+        callback()
+    }
+    else {
+        res.send({ result: "something went wrong" })
+    }
+};
 
 
 app.listen(5000);
